@@ -19,9 +19,9 @@ ${p}
 </textarea>
 <p>
 <b>
-<#list matchStrings as ms>
-${ms}
+<#list matches as m>
+${m}
 <br>
 </#list>
-${unpairedStrings}
+${unpaired}
 </b>

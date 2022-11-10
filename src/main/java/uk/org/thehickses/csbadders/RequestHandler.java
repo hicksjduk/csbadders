@@ -136,7 +136,7 @@ public class RequestHandler
             return polygon;
         }
 
-        public List<String> getMatchStrings()
+        public List<String> getMatches()
         {
             var deque = new ArrayDeque<>(pairs.stream()
                     .map(p -> Stream.of(p.p1(), p.p2())
@@ -152,7 +152,7 @@ public class RequestHandler
             return matchStrings;
         }
 
-        public String getUnpairedStrings()
+        public String getUnpaired()
         {
             var paired = pairs.stream()
                     .flatMap(p -> Stream.of(p.p1(), p.p2()))
