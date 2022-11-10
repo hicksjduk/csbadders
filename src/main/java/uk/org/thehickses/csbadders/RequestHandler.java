@@ -26,8 +26,7 @@ public class RequestHandler
     public OutputData generateOutput(Player[] polygon, String[] names)
     {
         if (names.length < 2)
-            return new OutputData(new ArrayList<>(), Arrays.asList(names),
-                    new ArrayList<>());
+            return new OutputData(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
         Player[] newPolygon = newPolygon(polygon, names);
         var pairings = getPairings(newPolygon);
         var paired = new ArrayList<Pairing>();
@@ -138,17 +137,15 @@ public class RequestHandler
 
         public List<String> getMatches()
         {
-            var deque = new ArrayDeque<>(pairs.stream()
+            var it = pairs.stream()
                     .map(p -> Stream.of(p.p1(), p.p2())
                             .map(Player::name)
                             .collect(Collectors.joining(" & ")))
-                    .toList());
+                    .iterator();
             var matchStrings = new ArrayList<String>();
-            while (!deque.isEmpty())
-            {
-                matchStrings.add(Stream.of(deque.pop(), deque.pop())
+            while (it.hasNext())
+                matchStrings.add(Stream.of(it.next(), it.next())
                         .collect(Collectors.joining(" vs ")));
-            }
             return matchStrings;
         }
 
