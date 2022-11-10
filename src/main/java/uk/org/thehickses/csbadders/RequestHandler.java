@@ -52,8 +52,8 @@ public class RequestHandler
     {
         var deque = new ArrayDeque<>(Arrays.asList(polygon));
         var answer = new ArrayList<Pairing>();
-        if (polygon.length % 2 == 0)
-            answer.add(new Pairing(deque.pop(), deque.pollLast()));
+        if (polygon.length % 2 == 1)
+            deque.pop();
         while (deque.size() > 1)
             answer.add(new Pairing(deque.pop(), deque.pollLast()));
         Collections.sort(answer);
