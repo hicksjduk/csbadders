@@ -4,11 +4,13 @@
 </head>
 <form href="/" method="POST">
 <p>
-<textarea name="names" cols=15 rows=12>
+Player names (one per line):
+<br><textarea name="names" cols=15 rows=12>
 <#list players as p>
 ${p}
 </#list>
 </textarea>
+<br>Duplicate names and <br>blank lines are ignored.
 <p>
 <input type="submit" name="action" value="Next"/>
 <p>
