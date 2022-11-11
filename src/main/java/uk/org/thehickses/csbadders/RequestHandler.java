@@ -25,7 +25,7 @@ public class RequestHandler
 
     public OutputData generateOutput(Player[] polygon, String[] names)
     {
-        if (names.length < 2)
+        if (names.length < 5)
             return new OutputData(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
         Player[] newPolygon = newPolygon(polygon, names);
         var pairings = getPairings(newPolygon);
