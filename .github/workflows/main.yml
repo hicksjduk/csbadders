@@ -24,13 +24,13 @@ jobs:
 
     - name: Authenticate to App Engine
       id: 'auth'
-      uses: 'google-github-actions/auth@latest'
+      uses: 'google-github-actions/auth@v1.0.0'
       with:
         credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
     - name: Deploy to App Engine
       id: deploy
-      uses: google-github-actions/deploy-appengine@latest
+      uses: google-github-actions/deploy-appengine@v0.8.2
       with:
         project_id: ${{ secrets.GCP_PROJECT }}
 
