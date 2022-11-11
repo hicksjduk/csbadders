@@ -20,15 +20,16 @@ public class RequestHandler
 
     public String handle(Player[] polygon, String[] names)
     {
-        return templater.applyTemplate("home.ftlh", generateOutput(polygon, names));
+        return templater.applyTemplate("home.ftlh", generateOutput(polygon, Stream.of(names)
+                .distinct()
+                .sorted()
+                .toArray(String[]::new)));
     }
 
     public OutputData generateOutput(Player[] polygon, String[] names)
     {
-        names = Stream.of(names).distinct().toArray(String[]::new);
-        var sortedNames = Stream.of(names).sorted().toList();
         if (names.length < 5)
-            return new OutputData(new ArrayList<>(), sortedNames, new ArrayList<>());
+            return new OutputData(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
         Player[] newPolygon = newPolygon(polygon, names);
         var pairings = getPairings(newPolygon);
         var paired = new ArrayList<Pairing>();
@@ -47,7 +48,7 @@ public class RequestHandler
                         if (players.size() == 4)
                             paired.addAll(pairs);
                     });
-        return new OutputData(paired, sortedNames, Arrays.asList(newPolygon));
+        return new OutputData(paired, Arrays.asList(names), Arrays.asList(newPolygon));
     }
 
     private List<Pairing> getPairings(Player[] polygon)
