@@ -23,4 +23,6 @@ of `Next` will reflect the changes. Duplicate names and blank lines are ignored.
 
 The state is stored in the page itself, so if you close the page you will need to start again from scratch.
 
+The app is written in Java using Spring Boot. It can be run locally by running the 
+[`Application` class](src/main/java/uk/org/thehickses/csbadders/Application.java).
 Changes to the app are automatically deployed when checked in to the `main` branch.
