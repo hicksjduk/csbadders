@@ -151,6 +151,8 @@ public class RequestHandler
 
         public String getUnpaired()
         {
+            if (pairs.isEmpty())
+                return "";
             var paired = pairs.stream()
                     .flatMap(p -> Stream.of(p.p1(), p.p2()))
                     .map(Player::name)
