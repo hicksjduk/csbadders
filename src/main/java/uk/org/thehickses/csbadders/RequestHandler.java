@@ -25,8 +25,9 @@ public class RequestHandler
 
     public OutputData generateOutput(Player[] polygon, String[] names)
     {
+        var sortedNames = Stream.of(names).distinct().sorted().toList();
         if (names.length < 5)
-            return new OutputData(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
+            return new OutputData(new ArrayList<>(), sortedNames, new ArrayList<>());
         Player[] newPolygon = newPolygon(polygon, names);
         var pairings = getPairings(newPolygon);
         var paired = new ArrayList<Pairing>();
@@ -45,7 +46,7 @@ public class RequestHandler
                         if (players.size() == 4)
                             paired.addAll(pairs);
                     });
-        return new OutputData(paired, Arrays.asList(names), Arrays.asList(newPolygon));
+        return new OutputData(paired, sortedNames, Arrays.asList(newPolygon));
     }
 
     private List<Pairing> getPairings(Player[] polygon)
