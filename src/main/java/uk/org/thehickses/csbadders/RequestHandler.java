@@ -25,7 +25,8 @@ public class RequestHandler
 
     public OutputData generateOutput(Player[] polygon, String[] names)
     {
-        var sortedNames = Stream.of(names).distinct().sorted().toList();
+        names = Stream.of(names).distinct().toArray(String[]::new);
+        var sortedNames = Stream.of(names).sorted().toList();
         if (names.length < 5)
             return new OutputData(new ArrayList<>(), sortedNames, new ArrayList<>());
         Player[] newPolygon = newPolygon(polygon, names);
