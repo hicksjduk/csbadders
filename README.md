@@ -23,7 +23,7 @@ of `Next` will reflect the changes. Duplicate names and blank lines are ignored.
 
 The state is stored in the page itself, so if you close the page you will need to start again from scratch.
 
-The app is written in Java using Spring Boot and Freemarker templating.
+The app is written in Java 17, using Spring Boot and Freemarker templating.
 It can be run locally by running the 
 [`Application` class](src/main/java/uk/org/thehickses/csbadders/Application.java).
 It is currently hosted on Google Cloud Platform;
