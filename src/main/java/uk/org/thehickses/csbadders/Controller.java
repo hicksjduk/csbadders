@@ -55,7 +55,8 @@ public class Controller
     private Stream<String> extractLines(String str)
     {
         return str.lines()
-                .filter(StringUtils::hasLength);
+                .filter(StringUtils::hasLength)
+                .map(String::trim);
     }
 
     private static Pattern pattern = Pattern.compile("(.+)\\s(\\d+)");
