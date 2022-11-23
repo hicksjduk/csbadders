@@ -1,6 +1,5 @@
 package uk.org.thehickses.csbadders;
 
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -43,7 +42,7 @@ public class Controller
 
     private Player[] extractPlayers(String str)
     {
-        return extractLines(str).map(this::toPlayer)
+        return extractLines(str).map(Player::fromString)
                 .toArray(Player[]::new);
     }
 
@@ -57,16 +56,5 @@ public class Controller
         return str.lines()
                 .filter(StringUtils::hasLength)
                 .map(String::trim);
-    }
-
-    private static Pattern pattern = Pattern.compile("(.+)\\s(\\d+)");
-
-    private Player toPlayer(String str)
-    {
-        var matcher = pattern.matcher(str);
-        if (!matcher.matches())
-            return null;
-        return new Player(matcher.group(1)
-                .trim(), Integer.parseInt(matcher.group(2)));
     }
 }

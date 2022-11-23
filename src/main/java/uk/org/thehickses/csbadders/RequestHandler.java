@@ -4,7 +4,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,25 +33,21 @@ public class RequestHandler
     {
         if (names.length < 4)
             return new OutputData(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
-        Player[] newPolygon = newPolygon(polygon, names);
-        var pairings = getPairings(newPolygon);
-        var paired = new ArrayList<Pairing>();
-        var byScore = pairings.stream()
-                .collect(Collectors.groupingBy(p -> pairings.indexOf(p) / 2));
-        byScore.entrySet()
-                .forEach(e ->
-                    {
-                        var score = e.getKey();
-                        var pairs = e.getValue();
-                        var players = pairs.stream()
-                                .flatMap(p -> Stream.of(p.p1(), p.p2()))
-                                .toList();
-                        players.stream()
-                                .forEach(p -> p.incrementScore(score));
-                        if (players.size() == 4)
-                            paired.addAll(pairs);
-                    });
-        return new OutputData(paired, Arrays.asList(names), Arrays.asList(newPolygon));
+        var newPolygon = newPolygon(polygon, names);
+        var pairings = Optional.of(getPairings(newPolygon))
+                .map(l -> l.subList(0, l.size() / 2 * 2))
+                .get();
+        var playersInPairedOrder = new LinkedHashMap<String, Player>();
+        pairings.stream()
+                .flatMap(p -> Stream.of(p.p1(), p.p2()))
+                .forEach(p -> playersInPairedOrder.put(p.getName(), p));
+        Stream.of(newPolygon)
+                .forEach(p -> playersInPairedOrder.putIfAbsent(p.getName(), p));
+        var index = new AtomicInteger();
+        playersInPairedOrder.values()
+                .stream()
+                .forEach(p -> p.addCourt(index.getAndIncrement() / 4));
+        return new OutputData(pairings, Arrays.asList(names), Arrays.asList(newPolygon));
     }
 
     private List<Pairing> getPairings(Player[] polygon)
@@ -67,16 +66,16 @@ public class RequestHandler
     {
         var nameStatuses = Stream.of(names)
                 .collect(Collectors.partitioningBy(Stream.of(polygon)
-                        .map(Player::name)
+                        .map(Player::getName)
                         .toList()::contains));
         var newNames = nameStatuses.get(false);
         var existingNames = nameStatuses.get(true);
         if (newNames.isEmpty() && polygon.length == names.length)
             return rotate(polygon);
         var newList = new ArrayList<>(Stream.concat(Stream.of(polygon)
-                .filter(p -> existingNames.contains(p.name())),
+                .filter(p -> existingNames.contains(p.getName())),
                 newNames.stream()
-                        .map(n -> new Player(n, 0)))
+                        .map(n -> new Player(n)))
                 .toList());
         Collections.shuffle(newList);
         return newList.stream()
@@ -96,17 +95,19 @@ public class RequestHandler
 
     public static record Pairing(Player p1, Player p2) implements Comparable<Pairing>
     {
-        public int courtScores()
+        public int sortKey()
         {
             return Stream.of(p1(), p2())
-                    .mapToInt(Player::courtScore)
-                    .sum();
+                    .mapToInt(Player::sortKey)
+                    .sorted()
+                    .max()
+                    .getAsInt();
         }
 
         @Override
         public int compareTo(Pairing o)
         {
-            return Integer.compare(o.courtScores(), this.courtScores());
+            return Integer.compare(o.sortKey(), this.sortKey());
         }
     }
 
@@ -142,13 +143,18 @@ public class RequestHandler
         {
             var it = pairs.stream()
                     .map(p -> Stream.of(p.p1(), p.p2())
-                            .map(Player::name)
+                            .map(Player::getName)
                             .collect(Collectors.joining(" & ")))
                     .iterator();
             var matchStrings = new ArrayList<String>();
             while (it.hasNext())
-                matchStrings.add(Stream.of(it.next(), it.next())
-                        .collect(Collectors.joining(" vs ")));
+            {
+                Optional.of(it.next())
+                        .filter(x -> it.hasNext())
+                        .map(p -> Stream.of(p, it.next())
+                                .collect(Collectors.joining(" vs ")))
+                        .ifPresent(matchStrings::add);
+            }
             return matchStrings;
         }
 
@@ -158,7 +164,7 @@ public class RequestHandler
                 return "";
             var paired = pairs.stream()
                     .flatMap(p -> Stream.of(p.p1(), p.p2()))
-                    .map(Player::name)
+                    .map(Player::getName)
                     .toList();
             return players.stream()
                     .filter(Predicate.not(paired::contains))
