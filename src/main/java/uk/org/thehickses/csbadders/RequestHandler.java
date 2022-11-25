@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class RequestHandler
@@ -46,7 +47,7 @@ public class RequestHandler
         var index = new AtomicInteger();
         playersInPairedOrder.values()
                 .stream()
-                .forEach(p -> p.addCourt(index.getAndIncrement() / 4));
+                .forEach(p -> p.addCourt(index.getAndIncrement() / 4 + 1));
         return new OutputData(pairings, Arrays.asList(names), Arrays.asList(newPolygon));
     }
 
@@ -75,7 +76,7 @@ public class RequestHandler
         var newList = new ArrayList<>(Stream.concat(Stream.of(polygon)
                 .filter(p -> existingNames.contains(p.getName())),
                 newNames.stream()
-                        .map(n -> new Player(n)))
+                        .map(n -> new Player(n, polygon.length / 4 + 1)))
                 .toList());
         Collections.shuffle(newList);
         return newList.stream()
@@ -95,19 +96,20 @@ public class RequestHandler
 
     public static record Pairing(Player p1, Player p2) implements Comparable<Pairing>
     {
-        public int sortKey()
+        public String sortKey()
         {
             return Stream.of(p1(), p2())
-                    .mapToInt(Player::sortKey)
-                    .sorted()
-                    .max()
-                    .getAsInt();
+                    .map(Player::sortKey)
+                    .flatMap(IntStream::boxed)
+                    .sorted((a, b) -> Integer.compare(b, a))
+                    .map("%02d"::formatted)
+                    .collect(Collectors.joining());
         }
 
         @Override
         public int compareTo(Pairing o)
         {
-            return Integer.compare(o.sortKey(), this.sortKey());
+            return o.sortKey().compareTo(sortKey());
         }
     }
 
