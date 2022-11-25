@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -79,6 +80,15 @@ public class RequestHandler
                         .map(n -> new Player(n, polygon.length / 4 + 1)))
                 .toList());
         Collections.shuffle(newList);
+        if (names.length % 2 == 1)
+            IntStream.range(0, newList.size())
+                    .filter(i -> !newNames.contains(newList.get(i)
+                            .getName()))
+                    .boxed()
+                    .findFirst()
+                    .filter(i -> i != 0)
+                    .map(i -> newList.remove(i.intValue()))
+                    .ifPresent(p -> newList.add(0, p));
         return newList.stream()
                 .toArray(Player[]::new);
     }
@@ -109,7 +119,8 @@ public class RequestHandler
         @Override
         public int compareTo(Pairing o)
         {
-            return o.sortKey().compareTo(sortKey());
+            return o.sortKey()
+                    .compareTo(sortKey());
         }
     }
 
