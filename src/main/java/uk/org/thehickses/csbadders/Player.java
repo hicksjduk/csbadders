@@ -11,7 +11,7 @@ public class Player
 {
     private static final int MAX_COURTS = 5;
 
-    private final String name;
+    private String name;
     private final LinkedList<Integer> courts = new LinkedList<>();
 
     public static Player fromString(String str)
@@ -23,6 +23,11 @@ public class Player
         while (it.hasNext())
             answer.addCourt(Integer.parseInt(it.next()));
         return answer;
+    }
+
+    @SuppressWarnings("unused")
+    private Player()
+    {
     }
 
     private Player(String name)
@@ -41,6 +46,22 @@ public class Player
     public String getName()
     {
         return name;
+    }
+
+    public String getCourts()
+    {
+        return courts.stream()
+                .map("%d"::formatted)
+                .collect(Collectors.joining(" "));
+    }
+
+    @SuppressWarnings("unused")
+    private void setCourts(String str)
+    {
+        courts.clear();
+        courts.addAll(Stream.of(str.split(" "))
+                .map(Integer::getInteger)
+                .toList());
     }
 
     public String toString()

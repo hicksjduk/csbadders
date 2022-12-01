@@ -1,25 +1,34 @@
 package uk.org.thehickses.csbadders;
 
+import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+
 public class RequestHandler
 {
+    private static final String stateKey = "state";
+
+    private final Bucket bucket;
     private final Templater templater;
 
-    public RequestHandler(Templater templater)
+    public RequestHandler(Bucket storage, Templater templater)
     {
+        this.bucket = storage;
         this.templater = templater;
     }
 
@@ -31,10 +40,33 @@ public class RequestHandler
                 .toArray(String[]::new)));
     }
 
-    public OutputData generateOutput(Player[] polygon, String[] names)
+    private State state(List<String> names)
+    {
+        LocalDate today = LocalDate.now();
+        return Optional.of(stateKey)
+                .map(k -> bucket.get(k))
+                .map(Blob::getContent)
+                .map(this::state)
+                .filter(State::isToday)
+                .orElseGet(() -> new State(null, names, null));
+    }
+
+    private State state(byte[] content)
+    {
+        try
+        {
+            return new ObjectMapper(new YAMLFactory()).readValue(content, State.class);
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException("Unable to convert blob to State", e);
+        }
+    }
+
+    public State generateOutput(Player[] polygon, String[] names)
     {
         if (names.length < 4)
-            return new OutputData(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
+            return new State(new ArrayList<>(), Arrays.asList(names), new ArrayList<>());
         var newPolygon = newPolygon(polygon, names);
         var pairings = Optional.of(getPairings(newPolygon))
                 .map(l -> l.subList(0, l.size() / 2 * 2))
@@ -49,7 +81,7 @@ public class RequestHandler
         playersInPairedOrder.values()
                 .stream()
                 .forEach(p -> p.addCourt(index.getAndIncrement() / 4 + 1));
-        return new OutputData(pairings, Arrays.asList(names), Arrays.asList(newPolygon));
+        return new State(pairings, Arrays.asList(names), Arrays.asList(newPolygon));
     }
 
     private List<Pairing> getPairings(Player[] polygon)
@@ -102,86 +134,5 @@ public class RequestHandler
             deque.offer(last);
         return deque.stream()
                 .toArray(Player[]::new);
-    }
-
-    public static record Pairing(Player p1, Player p2) implements Comparable<Pairing>
-    {
-        public String sortKey()
-        {
-            return Stream.of(p1(), p2())
-                    .map(Player::sortKey)
-                    .flatMap(IntStream::boxed)
-                    .sorted((a, b) -> Integer.compare(b, a))
-                    .map("%02d"::formatted)
-                    .collect(Collectors.joining());
-        }
-
-        @Override
-        public int compareTo(Pairing o)
-        {
-            return o.sortKey()
-                    .compareTo(sortKey());
-        }
-    }
-
-    public static class OutputData
-    {
-        private final List<Pairing> pairs;
-        private final List<String> players;
-        private final List<Player> polygon;
-
-        public OutputData(List<Pairing> pairs, List<String> players, List<Player> polygon)
-        {
-            this.pairs = pairs;
-            this.players = players;
-            this.polygon = polygon;
-        }
-
-        public List<Pairing> getPairs()
-        {
-            return pairs;
-        }
-
-        public List<String> getPlayers()
-        {
-            return players;
-        }
-
-        public List<Player> getPolygon()
-        {
-            return polygon;
-        }
-
-        public List<String> getMatches()
-        {
-            var it = pairs.stream()
-                    .map(p -> Stream.of(p.p1(), p.p2())
-                            .map(Player::getName)
-                            .collect(Collectors.joining(" & ")))
-                    .iterator();
-            var matchStrings = new ArrayList<String>();
-            while (it.hasNext())
-            {
-                Optional.of(it.next())
-                        .filter(x -> it.hasNext())
-                        .map(p -> Stream.of(p, it.next())
-                                .collect(Collectors.joining(" vs ")))
-                        .ifPresent(matchStrings::add);
-            }
-            return matchStrings;
-        }
-
-        public String getUnpaired()
-        {
-            if (pairs.isEmpty())
-                return "";
-            var paired = pairs.stream()
-                    .flatMap(p -> Stream.of(p.p1(), p.p2()))
-                    .map(Player::getName)
-                    .toList();
-            return players.stream()
-                    .filter(Predicate.not(paired::contains))
-                    .collect(Collectors.joining(", "));
-        }
     }
 }
