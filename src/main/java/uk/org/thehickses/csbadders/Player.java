@@ -7,6 +7,8 @@ import java.util.stream.Stream;
 
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Player
 {
     private static final int MAX_COURTS = 5;
@@ -47,6 +49,12 @@ public class Player
     {
         return name;
     }
+    
+    @JsonIgnore
+    public Stream<Integer> courts()
+    {
+        return courts.stream();
+    }
 
     public String getCourts()
     {
@@ -60,7 +68,7 @@ public class Player
     {
         courts.clear();
         courts.addAll(Stream.of(str.split(" "))
-                .map(Integer::getInteger)
+                .map(Integer::parseInt)
                 .toList());
     }
 

@@ -4,7 +4,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,7 +14,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "date", "polygon" })
+@JsonPropertyOrder({ "date", "polygon", "pairings" })
 public class State
 {
     private List<Pairing> pairs;
@@ -24,7 +26,7 @@ public class State
     private State()
     {
     }
-    
+
     public State(List<Pairing> pairs, List<String> players, List<Player> polygon)
     {
         this.pairs = pairs;
@@ -94,7 +96,8 @@ public class State
         return DateTimeFormatter.ISO_LOCAL_DATE.format(date);
     }
 
-    public void setDate(String str) {
+    public void setDate(String str)
+    {
         date = LocalDate.parse(str);
     }
 
@@ -103,5 +106,31 @@ public class State
     {
         return LocalDate.now()
                 .equals(date);
+    }
+
+    public List<List<String>> getPairings()
+    {
+        return pairs.stream()
+                .map(p -> Stream.of(p.p1(), p.p2())
+                        .map(Player::getName)
+                        .toList())
+                .toList();
+    }
+
+    public void setPairings(List<List<String>> pairings)
+    {
+        var byName = playersByName();
+        pairs = pairings.stream()
+                .map(l -> l.stream()
+                        .map(byName::get)
+                        .iterator())
+                .map(it -> new Pairing(it.next(), it.next()))
+                .toList();
+    }
+
+    private Map<String, Player> playersByName()
+    {
+        return polygon.stream()
+                .collect(Collectors.toMap(Player::getName, Function.identity()));
     }
 }

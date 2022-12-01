@@ -2,12 +2,13 @@ package uk.org.thehickses.csbadders;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
-import org.threeten.bp.LocalDate;
-import org.threeten.bp.format.DateTimeFormatter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -22,6 +23,7 @@ class StateYamlConversion
                 "Hannah", "Helen", "Ciara");
         var players = names.stream()
                 .map(n -> new Player(n, 0))
+                .peek(p -> p.addCourt(1))
                 .toList();
         var pairings = IntStream.range(0, players.size() / 2)
                 .map(i -> i * 2)
@@ -31,7 +33,7 @@ class StateYamlConversion
         var state = new State(pairings, names, players);
         var yaml = new ObjectMapper(new YAMLFactory().configure(Feature.MINIMIZE_QUOTES, true))
                 .writeValueAsString(state);
-//        System.out.println(yaml);
+        // System.out.println(yaml);
         assertThat(yaml).isEqualTo(yaml());
     }
 
@@ -43,7 +45,16 @@ class StateYamlConversion
                 .stream()
                 .map(Player::getName)).containsExactly("Jeremy", "Dan", "Nigel", "Sophie", "Denise",
                         "Pete", "Frank", "Hannah", "Helen", "Ciara");
+        state.getPolygon()
+                .stream()
+                .map(Player::courts)
+                .forEach(c -> assertThat(c).containsExactly(0, 0, 0, 0, 1));
         assertThat(state.date()).isEqualTo(java.time.LocalDate.now());
+        assertThat(state.getPairs()
+                .stream()
+                .flatMap(p -> Stream.of(p.p1(), p.p2()))
+                .map(Player::getName)).containsExactly("Jeremy", "Dan", "Nigel", "Sophie", "Denise",
+                        "Pete", "Frank", "Hannah", "Helen", "Ciara");
     }
 
     private static final String yaml()
@@ -57,24 +68,35 @@ class StateYamlConversion
             date: <today>
             polygon:
             - name: Jeremy
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Dan
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Nigel
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Sophie
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Denise
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Pete
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Frank
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Hannah
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Helen
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
             - name: Ciara
-              courts: 0 0 0 0 0
+              courts: 0 0 0 0 1
+            pairings:
+            - - Jeremy
+              - Dan
+            - - Nigel
+              - Sophie
+            - - Denise
+              - Pete
+            - - Frank
+              - Hannah
+            - - Helen
+              - Ciara
                         """;
 }
