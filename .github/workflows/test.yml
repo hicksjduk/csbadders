@@ -25,7 +25,7 @@ jobs:
     - name: Replace variables
       uses: 73h/gae-app-yaml-replace-env-variables@v0.1
       env:
-        STATE_BUCKET: ${{ secrets.GCP_TEST_PROJECT }}.appspot.com
+        GCP_PROJECT: ${{ secrets.GCP_TEST_PROJECT }}
       with:
         app_yaml_path: "app.yaml"
 
