@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper;
 
@@ -50,7 +51,7 @@ public class Application
     @Bean
     ObjectMapper yamlMapper()
     {
-        return new ObjectMapper(new YAMLFactory());
+        return new ObjectMapper(new YAMLFactory().configure(Feature.MINIMIZE_QUOTES, true));
     }
 
     @Bean
