@@ -9,17 +9,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.storage.Blob;
 
-import uk.org.thehickses.csbadders.Application.StorageInfo;
-
 public class RequestHandler
 {
     private static final String stateKey = "state";
 
-    private final StorageInfo storage;
+    private final StorageBucket storage;
     private final ObjectMapper mapper;
     private final Templater templater;
 
-    public RequestHandler(StorageInfo storage, ObjectMapper mapper, Templater templater)
+    public RequestHandler(StorageBucket storage, ObjectMapper mapper, Templater templater)
     {
         this.storage = storage;
         this.mapper = mapper;
