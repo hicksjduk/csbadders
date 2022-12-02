@@ -14,7 +14,7 @@ ${p}
 <p>
 <input type="submit" name="action" value="Next"/>
 <p>
-<textarea name="polygon" cols=15 rows=12 hidden="true">
+<textarea name="xxx" cols=15 rows=12 hidden="true">
 <#list polygon as p>
 ${p}
 </#list>

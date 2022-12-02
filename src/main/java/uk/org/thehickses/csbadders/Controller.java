@@ -1,5 +1,7 @@
 package uk.org.thehickses.csbadders;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -22,7 +24,7 @@ public class Controller
     @GetMapping("/")
     public String doGet()
     {
-        return reqHandler.handle(new Player[0], new String[0]);
+        return reqHandler.handle(Arrays.asList(), false);
     }
 
     @PostMapping("/")
@@ -31,7 +33,7 @@ public class Controller
     {
         try
         {
-            return reqHandler.handle(extractPlayers(polygon), extractStrings(names));
+            return reqHandler.handle(extractStrings(names), true);
         }
         catch (Throwable ex)
         {
@@ -40,15 +42,11 @@ public class Controller
         }
     }
 
-    private Player[] extractPlayers(String str)
+    private List<String> extractStrings(String str)
     {
-        return extractLines(str).map(Player::fromString)
-                .toArray(Player[]::new);
-    }
-
-    private String[] extractStrings(String str)
-    {
-        return extractLines(str).toArray(String[]::new);
+        return extractLines(str).map(s -> s.replaceAll("\\s+", " "))
+                .distinct()
+                .toList();
     }
 
     private Stream<String> extractLines(String str)
