@@ -3,11 +3,11 @@ name: Deploy to GAE
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
+  # Triggers the workflow on push or pull request events but only for the test branch
   push:
-    branches: [ main ]
+    branches: [ test ]
   pull_request:
-    branches: [ main ]
+    branches: [ test ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
     - name: Replace variables
       uses: 73h/gae-app-yaml-replace-env-variables@v0.1
       env:
-        GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+        GCP_PROJECT: ${{ secrets.GCP_TEST_PROJECT }}
       with:
         app_yaml_path: "app.yaml"
 
@@ -39,7 +39,7 @@ jobs:
       id: deploy
       uses: google-github-actions/deploy-appengine@v0.8.2
       with:
-        project_id: ${{ secrets.GCP_PROJECT }}
+        project_id: ${{ secrets.GCP_TEST_PROJECT }}
 
     - name: Test
       run: curl "${{ steps.deploy.outputs.url }}"

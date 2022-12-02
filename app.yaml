@@ -1,2 +1,4 @@
 runtime: java17
 instance_class: F1
+env_variables:
+  - STATE_BUCKET: $GCP_PROJECT.appspot.com
