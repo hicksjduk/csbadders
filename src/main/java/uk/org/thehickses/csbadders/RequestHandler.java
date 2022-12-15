@@ -1,66 +1,23 @@
 package uk.org.thehickses.csbadders;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.cloud.storage.Blob;
+import java.util.stream.Stream;
 
 public class RequestHandler
 {
-    private static final String stateKey = "state";
-
-    private final StorageBucket storage;
-    private final ObjectMapper mapper;
     private final Templater templater;
 
-    public RequestHandler(StorageBucket storage, ObjectMapper mapper, Templater templater)
+    public RequestHandler(Templater templater)
     {
-        this.storage = storage;
-        this.mapper = mapper;
         this.templater = templater;
     }
 
-    public String handle(List<String> names, boolean post)
+    public String handle(List<String> names, Optional<Stream<String>> startingState)
     {
-        try
-        {
-            var state = state(names);
-            if (post)
-            {
-                state.doNext(names);
-                storage.insert(stateKey, mapper.writeValueAsBytes(state));
-            }
-            return templater.applyTemplate("home.ftlh", state);
-        }
-        catch (JsonProcessingException e)
-        {
-            throw new RuntimeException("Unable to write state", e);
-        }
-    }
-
-    private State state(List<String> names)
-    {
-        return Optional.of(stateKey)
-                .map(storage::get)
-                .map(Blob::getContent)
-                .map(this::state)
-                .filter(State::isToday)
-                .orElseGet(() -> new State(names));
-    }
-
-    private State state(byte[] content)
-    {
-        try
-        {
-            return new ObjectMapper(new YAMLFactory()).readValue(content, State.class);
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException("Unable to convert blob to State", e);
-        }
+        var state = startingState.map(State::new).map(s -> s.setNames(names))
+                .map(State::nextSet)
+                .orElse(new State().setNames(names));
+        return templater.applyTemplate("home.ftlh", state);
     }
 }

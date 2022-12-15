@@ -1,57 +1,48 @@
 package uk.org.thehickses.csbadders;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-@JsonPropertyOrder({ "date", "polygon", "pairings" })
 public class State
 {
     private List<Pairing> pairs;
     private List<Player> polygon;
-    private LocalDate date;
 
-    @SuppressWarnings("unused")
-    private State()
+    public State()
     {
-        this.date = LocalDate.now();
+        this(Stream.empty());
     }
 
-    public State(List<String> names)
+    public State(Stream<String> players)
     {
-        this(Arrays.asList(), names, Arrays.asList());
+        polygon = players.map(Player::fromString)
+                .toList();
+        pairs = new ArrayList<>();
     }
 
-    State(List<Pairing> pairs, List<String> players, List<Player> polygon)
-    {
-        this.pairs = pairs;
-        this.polygon = polygon;
-        this.date = LocalDate.now();
-    }
-    
-    public void doNext(List<String> names)
+    public State setNames(List<String> names)
     {
         polygon = newPolygon(names);
+        return this;
+    }
+
+    public State nextSet()
+    {
         pairs = generatePairings();
         updatePlayers();
+        return this;
     }
-    
+
     private void updatePlayers()
     {
         var playersInPairedOrder = new LinkedHashMap<String, Player>();
@@ -66,13 +57,6 @@ public class State
                 .forEach(p -> p.addCourt(index.getAndIncrement() / 4 + 1));
     }
 
-    @JsonIgnore
-    public List<Pairing> getPairs()
-    {
-        return pairs;
-    }
-
-    @JsonIgnore
     public List<String> getPlayers()
     {
         return polygon.stream()
@@ -86,7 +70,6 @@ public class State
         return polygon;
     }
 
-    @JsonIgnore
     public List<String> getMatches()
     {
         var it = pairs.stream()
@@ -106,7 +89,6 @@ public class State
         return matchStrings;
     }
 
-    @JsonIgnore
     public String getUnpaired()
     {
         if (pairs.isEmpty())
@@ -118,54 +100,6 @@ public class State
         return getPlayers().stream()
                 .filter(Predicate.not(paired::contains))
                 .collect(Collectors.joining(", "));
-    }
-
-    public LocalDate date()
-    {
-        return date;
-    }
-
-    public String getDate()
-    {
-        return DateTimeFormatter.ISO_LOCAL_DATE.format(date);
-    }
-
-    public void setDate(String str)
-    {
-        date = LocalDate.parse(str);
-    }
-
-    @JsonIgnore
-    public boolean isToday()
-    {
-        return LocalDate.now()
-                .equals(date);
-    }
-
-    public List<List<String>> getPairings()
-    {
-        return pairs.stream()
-                .map(p -> Stream.of(p.p1(), p.p2())
-                        .map(Player::getName)
-                        .toList())
-                .toList();
-    }
-
-    public void setPairings(List<List<String>> pairings)
-    {
-        var byName = playersByName();
-        pairs = pairings.stream()
-                .map(l -> l.stream()
-                        .map(byName::get)
-                        .iterator())
-                .map(it -> new Pairing(it.next(), it.next()))
-                .toList();
-    }
-
-    private Map<String, Player> playersByName()
-    {
-        return polygon.stream()
-                .collect(Collectors.toMap(Player::getName, Function.identity()));
     }
 
     private List<Player> newPolygon(List<String> names)

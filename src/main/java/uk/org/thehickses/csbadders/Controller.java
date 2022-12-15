@@ -2,6 +2,7 @@ package uk.org.thehickses.csbadders;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -24,16 +25,16 @@ public class Controller
     @GetMapping("/")
     public String doGet()
     {
-        return reqHandler.handle(Arrays.asList(), false);
+        return reqHandler.handle(Arrays.asList(), Optional.empty());
     }
 
     @PostMapping("/")
-    public String doPost(@RequestParam(defaultValue = "") String polygon,
-            @RequestParam(defaultValue = "") String names)
+    public String doPost(@RequestParam String polygon, @RequestParam String names)
     {
         try
         {
-            return reqHandler.handle(extractStrings(names), true);
+            return reqHandler.handle(extractStrings(names), Optional.of(polygon)
+                    .map(this::extractLines));
         }
         catch (Throwable ex)
         {

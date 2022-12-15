@@ -6,12 +6,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
-import com.google.cloud.storage.StorageOptions;
-import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper;
-
 @SpringBootApplication
 public class Application
 {
@@ -36,28 +30,8 @@ public class Application
     }
 
     @Bean
-    StorageBucket storageInfo()
+    RequestHandler requestHandler(Templater templater)
     {
-        var bucketConfig = System.getenv("STATE_BUCKET");
-        if (bucketConfig == null)
-            throw new RuntimeException("STATE_BUCKET environment variable not set");
-        if (bucketConfig.startsWith("local:"))
-            return new StorageBucket(LocalStorageHelper.getOptions()
-                    .getService(), bucketConfig.substring(6));
-        return new StorageBucket(StorageOptions.getDefaultInstance()
-                .getService(), bucketConfig);
-    }
-
-    @Bean
-    ObjectMapper yamlMapper()
-    {
-        return new ObjectMapper(new YAMLFactory().configure(Feature.MINIMIZE_QUOTES, true));
-    }
-
-    @Bean
-    RequestHandler requestHandler(StorageBucket storage, ObjectMapper yamlMapper,
-            Templater templater)
-    {
-        return new RequestHandler(storage, yamlMapper, templater);
+        return new RequestHandler(templater);
     }
 }
