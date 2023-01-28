@@ -4,11 +4,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public record Pairing (Player p1, Player p2) implements Comparable<Pairing>
+public record Match(Pairing pair1, Pairing pair2) implements Comparable<Match>
 {
     public String sortKey()
     {
-        return Stream.of(p1, p2)
+        return Stream.of(pair1, pair2)
+                .flatMap(p -> Stream.of(p.p1(), p.p2()))
                 .map(Player::sortKey)
                 .flatMap(IntStream::boxed)
                 .sorted((a, b) -> Integer.compare(b, a))
@@ -17,15 +18,17 @@ public record Pairing (Player p1, Player p2) implements Comparable<Pairing>
     }
 
     @Override
-    public int compareTo(Pairing o)
+    public int compareTo(Match o)
     {
         return o.sortKey()
                 .compareTo(sortKey());
     }
-    
+
     @Override
     public String toString()
     {
-        return Stream.of(p1, p2).map(Player::getName).collect(Collectors.joining(" & "));
+        return Stream.of(pair1, pair2)
+                .map(Pairing::toString)
+                .collect(Collectors.joining(" vs "));
     }
 }

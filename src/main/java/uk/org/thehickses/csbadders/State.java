@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -15,7 +14,7 @@ import java.util.stream.Stream;
 
 public class State
 {
-    private List<Pairing> pairs;
+    private List<Match> matches;
     private List<Player> polygon;
 
     public State()
@@ -27,7 +26,7 @@ public class State
     {
         polygon = players.map(Player::fromString)
                 .toList();
-        pairs = new ArrayList<>();
+        matches = new ArrayList<>();
     }
 
     public State setNames(List<String> names)
@@ -38,7 +37,7 @@ public class State
 
     public State nextSet()
     {
-        pairs = generatePairings();
+        matches = generateMatches();
         updatePlayers();
         return this;
     }
@@ -46,7 +45,8 @@ public class State
     private void updatePlayers()
     {
         var playersInPairedOrder = new LinkedHashMap<String, Player>();
-        pairs.stream()
+        matches.stream()
+                .flatMap(p -> Stream.of(p.pair1(), p.pair2()))
                 .flatMap(p -> Stream.of(p.p1(), p.p2()))
                 .forEach(p -> playersInPairedOrder.put(p.getName(), p));
         polygon.stream()
@@ -72,28 +72,17 @@ public class State
 
     public List<String> getMatches()
     {
-        var it = pairs.stream()
-                .map(p -> Stream.of(p.p1(), p.p2())
-                        .map(Player::getName)
-                        .collect(Collectors.joining(" & ")))
-                .iterator();
-        var matchStrings = new ArrayList<String>();
-        while (it.hasNext())
-        {
-            Optional.of(it.next())
-                    .filter(x -> it.hasNext())
-                    .map(p -> Stream.of(p, it.next())
-                            .collect(Collectors.joining(" vs ")))
-                    .ifPresent(matchStrings::add);
-        }
-        return matchStrings;
+        return matches.stream()
+                .map(Match::toString)
+                .toList();
     }
 
     public String getUnpaired()
     {
-        if (pairs.isEmpty())
+        if (matches.isEmpty())
             return "";
-        var paired = pairs.stream()
+        var paired = matches.stream()
+                .flatMap(p -> Stream.of(p.pair1(), p.pair2()))
                 .flatMap(p -> Stream.of(p.p1(), p.p2()))
                 .map(Player::getName)
                 .toList();
@@ -135,11 +124,21 @@ public class State
         if (polygon.size() < 4)
             return polygon;
         var deque = new ArrayDeque<>(polygon);
-        var last = polygon.size() % 2 == 1 ? null : deque.pollLast();
         deque.push(deque.pollLast());
-        if (last != null)
-            deque.offer(last);
         return new ArrayList<>(deque);
+    }
+    
+    private List<Match> generateMatches()
+    {
+        var pairs = generatePairings();
+        var p1 = new ArrayDeque<>(pairs.subList(0, pairs.size() / 2));
+        var p2 = new ArrayDeque<>(pairs.subList(pairs.size() / 2, pairs.size()));
+        if (p2.size() > p1.size())
+            p2.pop();
+        var answer = new ArrayList<Match>();
+        while (!p1.isEmpty())
+            answer.add(new Match(p1.pop(), p2.pop()));
+        return answer.stream().sorted().toList();
     }
 
     private List<Pairing> generatePairings()
