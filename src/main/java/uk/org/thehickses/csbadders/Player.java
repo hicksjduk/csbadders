@@ -1,6 +1,7 @@
 package uk.org.thehickses.csbadders;
 
 import java.util.LinkedList;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -18,12 +19,13 @@ public class Player
 
     public static Player fromString(String str)
     {
-        var it = Stream.of(str.split("\s+"))
-                .filter(StringUtils::hasLength)
-                .iterator();
-        var answer = new Player(it.next());
-        while (it.hasNext())
-            answer.addCourt(Integer.parseInt(it.next()));
+        var nameAndCourts = str.split(";");
+        var name = nameAndCourts[0];
+        var courts = nameAndCourts[1].split(",");
+        var answer = new Player(name);
+        Stream.of(courts)
+                .mapToInt(Integer::parseInt)
+                .forEach(answer::addCourt);
         return answer;
     }
 
@@ -49,7 +51,7 @@ public class Player
     {
         return name;
     }
-    
+
     @JsonIgnore
     public Stream<Integer> courts()
     {
@@ -74,9 +76,9 @@ public class Player
 
     public String toString()
     {
-        return "%s %s".formatted(name, courts.stream()
+        return "%s;%s".formatted(name, courts.stream()
                 .map(Object::toString)
-                .collect(Collectors.joining(" ")));
+                .collect(Collectors.joining(",")));
     }
 
     public void addCourt(int court)
